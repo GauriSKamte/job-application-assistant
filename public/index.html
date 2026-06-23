@@ -1093,21 +1093,24 @@ function parseTake(text) {
   return r;
 }
 
+function stripMd(s) { return s.replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1').trim(); }
+
 function renderTake(id, text) {
   const t = parseTake(text);
-  const sc = t.fitSignal.toLowerCase().includes('strong') ? 'sig-strong' : t.fitSignal.toLowerCase().includes('moderate') ? 'sig-moderate' : 'sig-stretch';
-  const wHtml = (t.watch.length ? t.watch : ['Review JD carefully']).map(w => `<div class="dot-item"><div class="flag-dot"></div><span>${w}</span></div>`).join('');
-  const gHtml = (t.green.length ? t.green : ['Good general alignment']).map(g => `<div class="dot-item"><div class="green-dot"></div><span>${g}</span></div>`).join('');
+  const fitClean = stripMd(t.fitSignal);
+  const sc = fitClean.toLowerCase().includes('strong') ? 'sig-strong' : fitClean.toLowerCase().includes('moderate') ? 'sig-moderate' : 'sig-stretch';
+  const wHtml = (t.watch.length ? t.watch : ['Review JD carefully']).map(w => `<div class="dot-item"><div class="flag-dot"></div><span>${stripMd(w)}</span></div>`).join('');
+  const gHtml = (t.green.length ? t.green : ['Good general alignment']).map(g => `<div class="dot-item"><div class="green-dot"></div><span>${stripMd(g)}</span></div>`).join('');
   document.getElementById(id+'-body').innerHTML = `
     <div class="take-grid">
-      <div class="take-cell"><div class="take-lbl">Fit signal</div><div class="take-val ${sc}">${t.fitSignal||'—'}</div></div>
-      <div class="take-cell"><div class="take-lbl">Worth applying</div><div class="take-val">${t.worth||'—'}</div></div>
+      <div class="take-cell"><div class="take-lbl">Fit signal</div><div class="take-val ${sc}">${fitClean||'—'}</div></div>
+      <div class="take-cell"><div class="take-lbl">Worth applying</div><div class="take-val">${stripMd(t.worth)||'—'}</div></div>
     </div>
     <div class="two-col">
       <div><div class="mini-label">Watch out for</div><div class="dot-list">${wHtml}</div></div>
       <div><div class="mini-label">Green lights</div><div class="dot-list">${gHtml}</div></div>
     </div>
-    ${t.bottom ? `<div class="bottom-line">${t.bottom}</div>` : ''}`;
+    ${t.bottom ? `<div class="bottom-line">${stripMd(t.bottom)}</div>` : ''}`;
 }
 
 function renderSummary(id, text) {
@@ -1165,7 +1168,8 @@ function renderATS(id, text) {
   const bar = document.createElement('div');
   bar.className = 'score-bar';
   bar.innerHTML = `<span class="score-lbl">${found}/${total} keywords matched</span><div class="score-track"><div class="score-fill" id="scoreFill" style="width:0%"></div></div><span class="score-pct">${pct}%</span>`;
-  document.getElementById(id).appendChild(bar);
+  const card = document.getElementById(id);
+  if (card) card.appendChild(bar);
   setTimeout(()=>{ const f=document.getElementById('scoreFill'); if(f) f.style.width=pct+'%'; }, 120);
   lastScore = pct+'%';
   document.getElementById('statScore').textContent = pct+'%';
