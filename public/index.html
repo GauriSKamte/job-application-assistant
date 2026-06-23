@@ -1099,7 +1099,8 @@ function parseTake(text) {
   let mode = '';
   for (const l of lines) {
     const lo = l.toLowerCase();
-    if (lo.startsWith('fit signal:')) { r.fitSignal = l.replace(/fit signal:/i,'').trim(); mode=''; }
+    if (lo.startsWith('company:') || lo.startsWith('role:')) { continue; } // used for tracking, not display
+    else if (lo.startsWith('fit signal:')) { r.fitSignal = l.replace(/fit signal:/i,'').trim(); mode=''; }
     else if (lo.startsWith('worth applying:')) { r.worth = l.replace(/worth applying:/i,'').trim(); mode=''; }
     else if (lo.startsWith('watch out')) { const v=l.replace(/watch out[^:]*:/i,'').trim(); if(v) r.watch.push(v); mode='watch'; }
     else if (lo.startsWith('green light')) { const v=l.replace(/green lights?:/i,'').trim(); if(v) r.green.push(v); mode='green'; }
@@ -1439,21 +1440,12 @@ async function runWorkflow() {
   lastCompany = ''; lastRole = ''; lastQA = 'Not provided';
 
   try {
-    // Extract company and role first — used for Notion tracking
-    const meta = await callClaude(
-      `Extract the company name and job title from this job description. Respond in exactly this format, nothing else:
-Company: [company name]
-Role: [job title]`,
-      jd);
-    const companyMatch = meta.match(/Company:\s*(.+)/i);
-    const roleMatch = meta.match(/Role:\s*(.+)/i);
-    lastCompany = companyMatch ? companyMatch[1].trim() : getCompany(jd);
-    lastRole = roleMatch ? roleMatch[1].trim() : getRole(jd);
-
     setPill(0,'active'); setRunning('s0','Assessing strategic fit…');
     const take = await callClaude(
       `You are a candid career advisor. Assess fit between a resume and job description. Be direct.
-Respond in exactly this format:
+Respond in exactly this format — do not deviate:
+Company: [company name from JD]
+Role: [exact job title from JD]
 Fit signal: [Strong / Moderate / Stretch] — one sentence reason
 Worth applying: [Yes / Yes with caveats / No]
 Watch out for:
@@ -1466,6 +1458,10 @@ Green lights:
 - [strength 3]
 Bottom line: [1-2 direct sentences]`,
       `RESUME:\n${RESUME_TEXT}\n\nJOB DESCRIPTION:\n${jd}`);
+    const companyMatch = take.match(/^Company:\s*(.+)/im);
+    const roleMatch = take.match(/^Role:\s*(.+)/im);
+    lastCompany = companyMatch ? companyMatch[1].trim() : getCompany(jd);
+    lastRole = roleMatch ? roleMatch[1].trim() : getRole(jd);
     renderTake('s0', take); setDone('s0'); setPill(0,'done');
 
     setPill(1,'active'); setRunning('s1','Writing tailored summary…');
