@@ -1057,23 +1057,18 @@ function makeCard(id, num, title, sub) {
 }
 
 function setRunning(id, msg) {
-  document.getElementById(id).classList.add('is-running');
-  document.getElementById(id+'-badge').className = 'step-badge running';
-  const s = document.getElementById(id+'-status');
-  s.className = 'step-status status-running'; s.textContent = 'Running';
-  const l = document.getElementById(id+'-loading');
-  document.getElementById(id+'-loading-msg').textContent = msg || 'Analyzing…';
-  l.style.display = 'flex';
+  const card = document.getElementById(id); if(card) card.classList.add('is-running');
+  const badge = document.getElementById(id+'-badge'); if(badge) badge.className = 'step-badge running';
+  const s = document.getElementById(id+'-status'); if(s) { s.className = 'step-status status-running'; s.textContent = 'Running'; }
+  const lmsg = document.getElementById(id+'-loading-msg'); if(lmsg) lmsg.textContent = msg || 'Analyzing…';
+  const l = document.getElementById(id+'-loading'); if(l) l.style.display = 'flex';
 }
 
 function setDone(id) {
-  document.getElementById(id).classList.remove('is-running');
-  document.getElementById(id).classList.add('is-done');
-  document.getElementById(id+'-badge').className = 'step-badge done';
-  document.getElementById(id+'-badge').textContent = '✓';
-  const s = document.getElementById(id+'-status');
-  s.className = 'step-status status-done'; s.textContent = 'Done';
-  document.getElementById(id+'-loading').style.display = 'none';
+  const card = document.getElementById(id); if(card) { card.classList.remove('is-running'); card.classList.add('is-done'); }
+  const badge = document.getElementById(id+'-badge'); if(badge) { badge.className = 'step-badge done'; badge.textContent = '✓'; }
+  const s = document.getElementById(id+'-status'); if(s) { s.className = 'step-status status-done'; s.textContent = 'Done'; }
+  const l = document.getElementById(id+'-loading'); if(l) l.style.display = 'none';
 }
 
 function parseTake(text) {
@@ -1165,12 +1160,13 @@ function renderATS(id, text) {
         <tbody>${rows.map(r=>`<tr><td>${r.kw}</td><td>${stIcon(r.st)}</td><td>${prBadge(r.pr)}</td><td style="color:var(--text-2);font-size:12px">${r.ctx}</td></tr>`).join('')}</tbody>
       </table>
     </div>`;
+  const fillId = 'scoreFill-' + id;
   const bar = document.createElement('div');
   bar.className = 'score-bar';
-  bar.innerHTML = `<span class="score-lbl">${found}/${total} keywords matched</span><div class="score-track"><div class="score-fill" id="scoreFill" style="width:0%"></div></div><span class="score-pct">${pct}%</span>`;
+  bar.innerHTML = `<span class="score-lbl">${found}/${total} keywords matched</span><div class="score-track"><div class="score-fill" id="${fillId}" style="width:0%"></div></div><span class="score-pct">${pct}%</span>`;
   const card = document.getElementById(id);
   if (card) card.appendChild(bar);
-  setTimeout(()=>{ const f=document.getElementById('scoreFill'); if(f) f.style.width=pct+'%'; }, 120);
+  setTimeout(()=>{ const f=document.getElementById(fillId); if(f) f.style.width=pct+'%'; }, 120);
   lastScore = pct+'%';
   document.getElementById('statScore').textContent = pct+'%';
   return { found, total, pct };
