@@ -618,7 +618,7 @@ main::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius:
   background: var(--bg-card);
   border: 1px solid var(--border-md);
   border-radius: var(--radius);
-  overflow: hidden;
+  overflow: visible;
   box-shadow: var(--shadow-md);
 }
 
@@ -628,6 +628,7 @@ main::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius:
   display: flex;
   align-items: center;
   gap: 10px;
+  border-radius: var(--radius) var(--radius) 0 0;
 }
 
 .closing-top-icon {
@@ -672,6 +673,8 @@ main::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius:
 .notion-section {
   border-top: 1px solid var(--border);
   padding: 14px 20px 18px;
+  background: var(--bg-secondary);
+  border-radius: 0 0 var(--radius) var(--radius);
 }
 
 .notion-token-row {
@@ -1463,8 +1466,13 @@ A: [answer]`,
     // Scroll closing card into view
     setTimeout(() => {
       const closing = document.getElementById('closingCard');
-      if (closing) closing.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 200);
+      if (closing) {
+        closing.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else {
+        const m = document.getElementById('mainContent');
+        if (m) m.scrollTop = m.scrollHeight;
+      }
+    }, 400);
 
   } catch(err) {
     const isCORS = err.message.toLowerCase().includes('fetch') || err.message.toLowerCase().includes('failed');
