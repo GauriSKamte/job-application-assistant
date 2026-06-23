@@ -1223,8 +1223,8 @@ function getRole(jd) {
 }
 
 function makeClosing(jd, scores) {
-  const company = getCompany(jd);
-  const role = getRole(jd);
+  const company = lastCompany || getCompany(jd);
+  const role = lastRole || getRole(jd);
   const atsStr = lastScore ? `${scores.found}/${scores.total} — ${lastScore}` : '—';
   const d = document.createElement('div');
   d.className = 'closing-card';
@@ -1238,10 +1238,10 @@ function makeClosing(jd, scores) {
       </div>
     </div>
     <div class="closing-rows">
-      <div class="closing-row"><span class="closing-key">Company</span><span class="closing-val" id="cc-company">${company}</span></div>
-      <div class="closing-row"><span class="closing-key">Role</span><span class="closing-val" id="cc-role">${role}</span></div>
-      <div class="closing-row"><span class="closing-key">ATS Score</span><span class="closing-val" id="cc-ats">${atsStr}</span></div>
-      <div class="closing-row"><span class="closing-key">Q&amp;A</span><span class="closing-val" id="cc-qa">${scores.qa?'Done':'Not provided'}</span></div>
+      <div class="closing-row"><span class="closing-key">Company</span><span class="closing-val">${company}</span></div>
+      <div class="closing-row"><span class="closing-key">Role</span><span class="closing-val">${role}</span></div>
+      <div class="closing-row"><span class="closing-key">ATS Score</span><span class="closing-val">${atsStr}</span></div>
+      <div class="closing-row"><span class="closing-key">Q&amp;A</span><span class="closing-val">${scores.qa?'Done':'Not provided'}</span></div>
       <div class="closing-row"><span class="closing-key">Ready to apply</span><span class="closing-val val-warn">⚠ Review gaps before submitting</span></div>
     </div>`;
   return d;
