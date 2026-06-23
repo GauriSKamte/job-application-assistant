@@ -1315,11 +1315,13 @@ async function trackToNotion() {
       btn.disabled = true;
     } else {
       const err = await res.json();
-      // If property name mismatch, try simplified version
-      if (err.code === 'validation_error' || res.status === 400) {
+      if (res.status === 404) {
+        setNotionStatus('trackStatus', 'err', '404: Database not found. Make sure your Notion integration is connected to the Applications database (open database → ··· → Connections → add your integration).');
+        btn.disabled = false;
+      } else if (err.code === 'validation_error' || res.status === 400) {
         await trackNotionFallback(token, company, role, atsScore, qaVal, rv, jd, today);
       } else {
-        throw new Error(err.message || 'Status ' + res.status);
+        throw new Error((err.error || err.message || 'Status ' + res.status) + (err.code ? ` (${err.code})` : ''));
       }
     }
   } catch(e) {
