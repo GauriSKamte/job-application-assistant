@@ -891,6 +891,15 @@ main::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius:
         <div style="font-size:10.5px;color:var(--text-3);margin-top:6px;line-height:1.5;">Token stored in browser only. <a href="https://www.notion.so/my-integrations" target="_blank" style="color:var(--accent);text-decoration:none;">Get yours →</a></div>
       </div>
 
+      <div>
+        <div class="field-label">Track to Notion</div>
+        <input class="rv-input" id="rvInput" placeholder="Resume version (e.g. O4, A53…)" style="width:100%;margin-bottom:8px;">
+        <button class="track-btn" id="trackBtn" onclick="trackToNotion()" disabled style="width:100%;justify-content:center;">
+          Track
+        </button>
+        <div class="notion-status" id="trackStatus" style="margin-top:8px;"></div>
+      </div>
+
     </div>
 
     <div class="sidebar-stats">
@@ -1224,16 +1233,6 @@ function makeClosing(jd, scores) {
       <div class="closing-row"><span class="closing-key">ATS Score</span><span class="closing-val" id="cc-ats">${atsStr}</span></div>
       <div class="closing-row"><span class="closing-key">Q&amp;A</span><span class="closing-val" id="cc-qa">${scores.qa?'Done':'Not provided'}</span></div>
       <div class="closing-row"><span class="closing-key">Ready to apply</span><span class="closing-val val-warn">⚠ Review gaps before submitting</span></div>
-    </div>
-    <div class="notion-section">
-      <div class="field-label" style="margin-bottom:8px;">Track to Notion</div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <input class="rv-input" id="rvInput" placeholder="Resume version (e.g. O4, A53…)" style="max-width:200px;">
-        <button class="track-btn" id="trackBtn" onclick="trackToNotion()">
-          <span class="notion-n">N</span> Log to Applications
-        </button>
-      </div>
-      <div class="notion-status" id="trackStatus" style="margin-top:8px;"></div>
     </div>`;
   return d;
 }
@@ -1267,14 +1266,18 @@ function setNotionStatus(elId, type, msg) {
 async function trackToNotion() {
   const token = getToken();
   if (!token) {
-    setNotionStatus('trackStatus', 'err', 'Add your Notion integration token in the sidebar first.');
+    setNotionStatus('trackStatus', 'err', 'Save your Notion token above first.');
+    return;
+  }
+  if (!RESUME_TEXT) {
+    setNotionStatus('trackStatus', 'err', 'Run the workflow first before tracking.');
     return;
   }
 
   const jd = document.getElementById('jdInput').value.trim();
-  const company = document.getElementById('cc-company')?.textContent || getCompany(jd);
-  const role = document.getElementById('cc-role')?.textContent || getRole(jd);
-  const atsScore = document.getElementById('cc-ats')?.textContent || (lastScore || 'N/A');
+  const company = document.getElementById('cc-company')?.textContent || getCompany(jd) || 'Unknown';
+  const role = document.getElementById('cc-role')?.textContent || getRole(jd) || 'Unknown';
+  const atsScore = document.getElementById('cc-ats')?.textContent || lastScore || 'N/A';
   const qaVal = document.getElementById('cc-qa')?.textContent || 'Not provided';
   const rv = document.getElementById('rvInput')?.value.trim() || resumeFileName || 'Not specified';
   const today = new Date().toISOString().split('T')[0];
@@ -1306,9 +1309,10 @@ async function trackToNotion() {
     });
 
     if (res.ok) {
-      setNotionStatus('trackStatus', 'ok', `✓ Logged: ${company} — ${role} → Applied (${today})`);
-      btn.textContent = '✓ Logged';
+      setNotionStatus('trackStatus', 'ok', `✓ Logged: ${company} — ${role} (${today})`);
+      btn.textContent = '✓ Tracked';
       btn.style.background = 'var(--green)';
+      btn.disabled = true;
     } else {
       const err = await res.json();
       // If property name mismatch, try simplified version
@@ -1352,7 +1356,7 @@ async function trackNotionFallback(token, company, role, atsScore, qaVal, rv, jd
   if (res.ok) {
     setNotionStatus('trackStatus', 'ok', `✓ Logged: ${company} — ${role} (${today})`);
     const btn = document.getElementById('trackBtn');
-    btn.textContent = '✓ Logged'; btn.style.background = 'var(--green)';
+    btn.textContent = '✓ Tracked'; btn.style.background = 'var(--green)'; btn.disabled = true;
   } else {
     const err = await res.json();
     throw new Error(err.message || 'Notion error');
@@ -1388,6 +1392,10 @@ async function runWorkflow() {
 
   document.getElementById('runBtn').disabled = true;
   document.getElementById('emptyState').style.display = 'none';
+  // Reset track button for new run
+  const tb = document.getElementById('trackBtn');
+  if (tb) { tb.disabled = true; tb.textContent = 'Track'; tb.style.background = ''; }
+  setNotionStatus('trackStatus', '', '');
   const main = document.getElementById('mainContent');
   while (main.firstChild) main.removeChild(main.firstChild);
   ['pill0','pill1','pill2','pill3'].forEach(id => document.getElementById(id).className = 'step-pill');
@@ -1463,16 +1471,9 @@ A: [answer]`,
     main.appendChild(makeClosing(jd, scores));
     jobsRun++;
     document.getElementById('statJobs').textContent = jobsRun;
-    // Scroll closing card into view
-    setTimeout(() => {
-      const closing = document.getElementById('closingCard');
-      if (closing) {
-        closing.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      } else {
-        const m = document.getElementById('mainContent');
-        if (m) m.scrollTop = m.scrollHeight;
-      }
-    }, 400);
+    // Enable track button now that workflow is done
+    const tb = document.getElementById('trackBtn');
+    if (tb) { tb.disabled = false; tb.textContent = 'Track'; tb.style.background = ''; }
 
   } catch(err) {
     const isCORS = err.message.toLowerCase().includes('fetch') || err.message.toLowerCase().includes('failed');
