@@ -884,11 +884,15 @@ main::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius:
       <div>
         <div class="field-label">Notion integration</div>
         <div class="notion-token-row">
-          <input class="notion-token-input" id="notionToken" type="password" placeholder="secret_xxxx… (Integration token)" autocomplete="off">
+          <input class="notion-token-input" id="notionToken" type="password" placeholder="Integration token (secret_… or ntn_…)" autocomplete="off">
           <button class="notion-save-btn" onclick="saveToken()">Save</button>
         </div>
+        <div class="notion-token-row" style="margin-top:6px;">
+          <input class="notion-token-input" id="notionDbId" type="text" placeholder="Database ID (from Notion URL)" autocomplete="off" style="font-family:var(--font);letter-spacing:0;">
+          <button class="notion-save-btn" onclick="saveDbId()">Save</button>
+        </div>
         <div class="notion-status" id="notionStatus"></div>
-        <div style="font-size:10.5px;color:var(--text-3);margin-top:6px;line-height:1.5;">Token stored in browser only. <a href="https://www.notion.so/my-integrations" target="_blank" style="color:var(--accent);text-decoration:none;">Get yours →</a></div>
+        <div style="font-size:10.5px;color:var(--text-3);margin-top:6px;line-height:1.5;">Token + DB ID stored in browser only. <a href="https://www.notion.so/my-integrations" target="_blank" style="color:var(--accent);text-decoration:none;">Get token →</a></div>
       </div>
 
       <div>
@@ -927,13 +931,18 @@ main::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius:
 <script>
 let RESUME_TEXT = '', resumeFileName = '', resumeWordCount = 0;
 let jobsRun = 0, lastScore = null, qaVisible = false;
+let lastCompany = '', lastRole = '', lastQA = 'Not provided';
 
-// Load saved Notion token
+// Load saved Notion token and DB ID
 window.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem('notion_token');
-  if (saved) {
-    document.getElementById('notionToken').value = saved;
+  const savedToken = localStorage.getItem('notion_token');
+  if (savedToken) {
+    document.getElementById('notionToken').value = savedToken;
     setNotionStatus('notionStatus', 'ok', '✓ Token loaded from browser storage');
+  }
+  const savedDb = localStorage.getItem('notion_db_id');
+  if (savedDb) {
+    document.getElementById('notionDbId').value = savedDb;
   }
 });
 
@@ -1238,7 +1247,7 @@ function makeClosing(jd, scores) {
 }
 
 // ── Notion helpers ──────────────────────────────────────────
-const NOTION_DB = '53f576ed-4995-43e0-90eb-44546e442be8';
+const NOTION_DB_DEFAULT = '53f576ed-4995-43e0-90eb-44546e442be8'; // fallback for Gauri
 
 function saveToken() {
   const val = document.getElementById('notionToken').value.trim();
@@ -1247,7 +1256,26 @@ function saveToken() {
     return;
   }
   localStorage.setItem('notion_token', val);
-  setNotionStatus('notionStatus', 'ok', '✓ Token saved — ready to track applications');
+  setNotionStatus('notionStatus', 'ok', '✓ Token saved');
+}
+
+function saveDbId() {
+  const raw = document.getElementById('notionDbId').value.trim().replace(/-/g, '');
+  if (raw.length !== 32) {
+    setNotionStatus('notionStatus', 'err', 'Database ID should be 32 characters — copy it from your Notion database URL');
+    return;
+  }
+  // Format with dashes: 8-4-4-4-12
+  const formatted = `${raw.slice(0,8)}-${raw.slice(8,12)}-${raw.slice(12,16)}-${raw.slice(16,20)}-${raw.slice(20)}`;
+  localStorage.setItem('notion_db_id', formatted);
+  document.getElementById('notionDbId').value = formatted;
+  setNotionStatus('notionStatus', 'ok', '✓ Database ID saved');
+}
+
+function getDbId() {
+  const input = document.getElementById('notionDbId').value.trim();
+  const stored = localStorage.getItem('notion_db_id');
+  return input || stored || NOTION_DB_DEFAULT;
 }
 
 function getToken() {
@@ -1275,10 +1303,10 @@ async function trackToNotion() {
   }
 
   const jd = document.getElementById('jdInput').value.trim();
-  const company = document.getElementById('cc-company')?.textContent || getCompany(jd) || 'Unknown';
-  const role = document.getElementById('cc-role')?.textContent || getRole(jd) || 'Unknown';
-  const atsScore = document.getElementById('cc-ats')?.textContent || lastScore || 'N/A';
-  const qaVal = document.getElementById('cc-qa')?.textContent || 'Not provided';
+  const company = lastCompany || getCompany(jd) || 'Unknown';
+  const role = lastRole || getRole(jd) || 'Unknown';
+  const atsScore = lastScore || 'N/A';
+  const qaVal = lastQA;
   const rv = document.getElementById('rvInput')?.value.trim() || resumeFileName || 'Not specified';
   const today = new Date().toISOString().split('T')[0];
 
@@ -1296,16 +1324,14 @@ async function trackToNotion() {
     "Resume Version":        { rich_text: [{ text: { content: rv } }] },
     "Job Description":       { rich_text: [{ text: { content: jd.slice(0, 2000) } }] },
     "Notes":                 { rich_text: [{ text: { content: '⚠ Confirm H1B sponsorship before applying. Logged via AppFlow.' } }] },
+    "Date Applied":          { date: { start: today } },
   };
-
-  // Date Applied — nested format your DB uses
-  props["date:Date Applied:start"] = { rich_text: [{ text: { content: today } }] };
 
   try {
     const res = await fetch('/api/notion', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, database_id: NOTION_DB, properties: props })
+      body: JSON.stringify({ token, database_id: getDbId(), properties: props })
     });
 
     if (res.ok) {
@@ -1341,7 +1367,7 @@ async function trackNotionFallback(token, company, role, atsScore, qaVal, rv, jd
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       token,
-      database_id: NOTION_DB,
+      database_id: getDbId(),
       properties: {
         "Company":        { title: [{ text: { content: company } }] },
         "Role":           { rich_text: [{ text: { content: role } }] },
@@ -1351,7 +1377,8 @@ async function trackNotionFallback(token, company, role, atsScore, qaVal, rv, jd
         "Q&A Done":       { select: { name: qaVal === 'Done' ? 'Yes' : 'No' } },
         "Resume Version": { rich_text: [{ text: { content: rv } }] },
         "Job Description":{ rich_text: [{ text: { content: jd.slice(0,2000) } }] },
-        "Notes":          { rich_text: [{ text: { content: '⚠ Confirm H1B sponsorship. Logged via AppFlow. Date: ' + today } }] }
+        "Date Applied":   { date: { start: today } },
+        "Notes":          { rich_text: [{ text: { content: '⚠ Confirm H1B sponsorship. Logged via AppFlow.' } }] }
       }
     })
   });
@@ -1409,8 +1436,20 @@ async function runWorkflow() {
   [c0,c1,c2,c3].forEach(c=>main.appendChild(c));
 
   const scores = { found:0, total:0, qa:!!qa };
+  lastCompany = ''; lastRole = ''; lastQA = 'Not provided';
 
   try {
+    // Extract company and role first — used for Notion tracking
+    const meta = await callClaude(
+      `Extract the company name and job title from this job description. Respond in exactly this format, nothing else:
+Company: [company name]
+Role: [job title]`,
+      jd);
+    const companyMatch = meta.match(/Company:\s*(.+)/i);
+    const roleMatch = meta.match(/Role:\s*(.+)/i);
+    lastCompany = companyMatch ? companyMatch[1].trim() : getCompany(jd);
+    lastRole = roleMatch ? roleMatch[1].trim() : getRole(jd);
+
     setPill(0,'active'); setRunning('s0','Assessing strategic fit…');
     const take = await callClaude(
       `You are a candid career advisor. Assess fit between a resume and job description. Be direct.
@@ -1464,7 +1503,7 @@ Format as:
 Q: [question]
 A: [answer]`,
         `RESUME:\n${RESUME_TEXT}\n\nJOB DESCRIPTION:\n${jd}\n\nQUESTIONS:\n${qa}`);
-      renderQA('s3', qaOut); scores.qa = true;
+      renderQA('s3', qaOut); scores.qa = true; lastQA = 'Done';
     } else {
       document.getElementById('s3-body').innerHTML = `<div style="color:var(--text-3);font-size:13px;font-style:italic;">No questions provided. Toggle "Add application questions" in the sidebar and re-run.</div>`;
     }
