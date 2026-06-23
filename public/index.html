@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AppFlow — Job Application Orchestrator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-page:      #F5F4F1;
+  --bg-sidebar:   #FDFCFB;
+  --bg-card:      #FFFFFF;
+  --bg-input:     #F9F8F6;
+  --bg-hover:     #F3F2EF;
+
+  --accent:       #5B4FE8;
+  --accent-light: #EEECfD;
+  --accent-mid:   #8B82EF;
+  --accent-dark:  #3D33C4;
+
+  --green:        #1D7A4A;
+  --green-bg:     #EBF7F1;
+  --green-border: rgba(29,122,74,0.18);
+
+  --amber:        #8A5A0A;
+  --amber-bg:     #FDF4E3;
+  --amber-border: rgba(138,90,10,0.18);
+
+  --red:          #A02525;
+  --red-bg:       #FDF0F0;
+  --red-border:   rgba(160,37,37,0.18);
+
+  --text-1:       #18181B;
+  --text-2:       #52525B;
+  --text-3:       #A1A1AA;
+
+  --border:       rgba(0,0,0,0.07);
+  --border-md:    rgba(0,0,0,0.11);
+  --border-strong:rgba(0,0,0,0.16);
+
+  --radius-xs: 5px;
+  --radius-sm: 8px;
+  --radius:    12px;
+  --radius-lg: 16px;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04);
+
+  --font: 'Inter', -apple-system, sans-serif;
+  --sidebar-w: 292px;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg-page);
+  color: var(--text-1);
+  font-size: 13.5px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ─────────────────────────────── */
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-rows: 58px 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Header ─────────────────────────────── */
+header {
+  grid-column: 1 / -1;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-md);
+  display: flex;
+  align-items: center;
+  padding: 0 20px 0 0;
+  gap: 0;
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
+}
+
+.header-brand {
+  width: var(--sidebar-w);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px;
+  border-right: 1px solid var(--border);
+  height: 100%;
+}
+
+.brand-mark {
+  width: 30px; height: 30px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.brand-mark svg { width: 16px; height: 16px; }
+
+.brand-name {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  color: var(--text-1);
+}
+
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 400;
+  letter-spacing: 0.1px;
+}
+
+.header-center {
+  flex: 1;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-pills {
+  display: flex;
+  gap: 5px;
+}
+
+.step-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 4px 11px;
+  border-radius: 20px;
+  background: var(--bg-hover);
+  color: var(--text-3);
+  border: 1px solid transparent;
+  transition: all 0.18s ease;
+  letter-spacing: -0.1px;
+}
+
+.step-pill .dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: currentColor; opacity: 0.55; flex-shrink: 0;
+}
+
+.step-pill.active {
+  background: var(--accent-light);
+  color: var(--accent);
+  border-color: rgba(91,79,232,0.2);
+}
+
+.step-pill.done {
+  background: var(--green-bg);
+  color: var(--green);
+  border-color: var(--green-border);
+}
+
+/* ── Sidebar ─────────────────────────────── */
+aside {
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-md);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-inner {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 14px;
+}
+
+.sidebar-inner::-webkit-scrollbar { width: 4px; }
+.sidebar-inner::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+
+.field-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--text-3);
+  margin-bottom: 7px;
+}
+
+/* Drop zone */
+.drop-zone {
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+  overflow: hidden;
+  background: var(--bg-input);
+}
+
+.drop-zone:hover { border-color: var(--accent-mid); background: var(--accent-light); }
+.drop-zone.drag-over { border-color: var(--accent); background: var(--accent-light); border-style: solid; }
+
+.drop-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 16px;
+  gap: 5px;
+  text-align: center;
+}
+
+.drop-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-md);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 4px;
+  box-shadow: var(--shadow-sm);
+}
+
+.drop-icon svg { width: 16px; height: 16px; color: var(--text-3); }
+
+.drop-text { font-size: 12.5px; font-weight: 500; color: var(--text-2); }
+.drop-sub  { font-size: 11px; color: var(--text-3); }
+
+.drop-loaded {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--green-bg);
+}
+
+.drop-loaded-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--green-border);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 15px;
+}
+
+.file-name { font-size: 12px; font-weight: 500; color: var(--text-1); line-height: 1.3; }
+.file-meta { font-size: 10.5px; color: var(--green); margin-top: 2px; }
+
+.clear-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 24px; height: 24px;
+  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-3);
+  font-size: 13px;
+  transition: all 0.12s;
+  flex-shrink: 0;
+}
+.clear-btn:hover { background: var(--red-bg); color: var(--red); }
+
+.file-error {
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--red);
+  background: var(--red-bg);
+  border: 1px solid var(--red-border);
+  border-radius: var(--radius-xs);
+  padding: 6px 10px;
+}
+
+.parse-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 5px;
+}
+
+/* Textarea */
+textarea {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-family: var(--font);
+  font-size: 12.5px;
+  color: var(--text-1);
+  resize: none;
+  outline: none;
+  line-height: 1.55;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+textarea::placeholder { color: var(--text-3); }
+textarea:focus { border-color: var(--accent-mid); box-shadow: 0 0 0 3px rgba(91,79,232,0.1); }
+
+/* Q toggle */
+.qa-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 8px 11px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-xs);
+  font-family: var(--font);
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.13s;
+}
+
+.qa-toggle:hover { border-color: var(--border-strong); background: var(--bg-hover); }
+
+.qa-toggle-icon {
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-md);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  color: var(--text-3);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Run button */
+.run-btn {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 11px 16px;
+  font-family: var(--font);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  letter-spacing: -0.2px;
+  box-shadow: 0 1px 3px rgba(91,79,232,0.25), 0 4px 12px rgba(91,79,232,0.15);
+}
+
+.run-btn:hover:not(:disabled) { background: var(--accent-dark); box-shadow: 0 2px 6px rgba(91,79,232,0.3), 0 6px 16px rgba(91,79,232,0.2); }
+.run-btn:active:not(:disabled) { transform: scale(0.99); }
+.run-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+.run-arrow { font-size: 16px; transition: transform 0.15s; }
+.run-btn:not(:disabled):hover .run-arrow { transform: translateX(3px); }
+
+/* Stats bar at bottom of sidebar */
+.sidebar-stats {
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: var(--bg-sidebar);
+  flex-shrink: 0;
+}
+
+.stat-tile {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-val { font-size: 20px; font-weight: 600; color: var(--text-1); line-height: 1.2; letter-spacing: -0.5px; }
+.stat-lbl { font-size: 10px; color: var(--text-3); margin-top: 2px; letter-spacing: 0.3px; }
+
+/* ── Main content ─────────────────────────── */
+main {
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+main::-webkit-scrollbar { width: 5px; }
+main::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  gap: 12px;
+}
+
+.empty-graphic {
+  width: 64px; height: 64px;
+  border-radius: 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-md);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 4px;
+}
+
+.empty-title { font-size: 16px; font-weight: 600; color: var(--text-2); letter-spacing: -0.3px; }
+.empty-sub { font-size: 13px; color: var(--text-3); max-width: 300px; line-height: 1.65; }
+
+/* ── Step cards ─────────────────────────────── */
+.step-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s;
+}
+
+.step-card.is-running { box-shadow: 0 0 0 2px var(--accent-light), var(--shadow-md); border-color: rgba(91,79,232,0.2); }
+.step-card.is-done { border-color: var(--border); }
+
+.step-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.step-badge {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.step-badge.idle    { background: var(--bg-hover); color: var(--text-3); }
+.step-badge.running { background: var(--accent); color: #fff; }
+.step-badge.done    { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+
+.step-title-wrap .step-title    { font-size: 13.5px; font-weight: 600; color: var(--text-1); letter-spacing: -0.2px; }
+.step-title-wrap .step-subtitle { font-size: 11.5px; color: var(--text-3); margin-top: 1px; }
+
+.step-status {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.status-idle    { background: var(--bg-hover); color: var(--text-3); }
+.status-running { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); }
+.status-done    { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+
+.step-body {
+  padding: 18px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-1);
+}
+
+/* Spinner */
+.spinner {
+  width: 15px; height: 15px;
+  border: 2px solid var(--border-md);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-3);
+  font-size: 12.5px;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+/* ── Strategic take ───────────────────────── */
+.take-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.take-cell {
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 13px;
+}
+
+.take-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text-3); margin-bottom: 4px; }
+.take-val { font-size: 13px; font-weight: 500; color: var(--text-1); }
+
+.sig-strong   { color: var(--green); }
+.sig-moderate { color: var(--amber); }
+.sig-stretch  { color: var(--red); }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.mini-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text-3); margin-bottom: 8px; }
+
+.dot-list { display: flex; flex-direction: column; gap: 6px; }
+.dot-item { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; line-height: 1.5; color: var(--text-2); }
+
+.flag-dot  { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); margin-top: 5px; flex-shrink: 0; }
+.green-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-top: 5px; flex-shrink: 0; }
+
+.bottom-line {
+  background: var(--accent-light);
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+  font-size: 13px;
+  color: var(--accent-dark);
+  border-left: 3px solid var(--accent);
+  margin-top: 12px;
+  font-style: italic;
+}
+
+/* ── Summary ──────────────────────────────── */
+.summary-quote {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--text-1);
+  border-left: 3px solid var(--accent);
+  padding-left: 16px;
+  margin-bottom: 14px;
+}
+
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--accent-light);
+  border: 1px solid rgba(91,79,232,0.15);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* ── ATS table ────────────────────────────── */
+.ats-wrap { overflow: hidden; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+.ats-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.ats-table th {
+  background: var(--bg-page);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-3);
+  padding: 9px 13px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.ats-table td { padding: 8px 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.ats-table tr:last-child td { border-bottom: none; }
+.ats-table tr:hover td { background: var(--bg-page); }
+
+.found   { color: var(--green); font-weight: 500; }
+.missing { color: var(--red);   font-weight: 500; }
+.partial { color: var(--amber); font-weight: 500; }
+
+.pill-high { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--red-bg); color: var(--red); font-weight: 500; border: 1px solid var(--red-border); }
+.pill-med  { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--amber-bg); color: var(--amber); font-weight: 500; border: 1px solid var(--amber-border); }
+.pill-low  { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--bg-hover); color: var(--text-3); font-weight: 500; }
+
+.score-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  background: var(--bg-page);
+  border-top: 1px solid var(--border);
+}
+.score-lbl { font-size: 12px; color: var(--text-2); }
+.score-track { flex: 1; height: 6px; background: var(--border-md); border-radius: 3px; overflow: hidden; }
+.score-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent-mid)); transition: width 1.1s cubic-bezier(0.22,1,0.36,1); }
+.score-pct { font-size: 15px; font-weight: 600; color: var(--text-1); min-width: 44px; text-align: right; letter-spacing: -0.4px; }
+
+/* ── Q&A ──────────────────────────────────── */
+.qa-item { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+.qa-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.qa-q { font-size: 11.5px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 7px; }
+.qa-a { font-size: 13.5px; line-height: 1.7; color: var(--text-1); }
+
+/* ── Closing card ─────────────────────────── */
+.closing-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.closing-top {
+  background: var(--accent);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.closing-top-icon {
+  width: 28px; height: 28px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+
+.closing-top-text { font-size: 13.5px; font-weight: 600; color: #fff; letter-spacing: -0.2px; }
+.closing-top-sub  { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 1px; }
+
+.closing-rows { padding: 4px 0; }
+.closing-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  gap: 16px;
+}
+.closing-row:last-child { border-bottom: none; }
+.closing-key { font-size: 11px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; }
+.closing-val { font-size: 13px; font-weight: 500; color: var(--text-1); text-align: right; }
+.val-warn  { color: var(--amber); }
+.val-green { color: var(--green); }
+
+/* ── Misc ─────────────────────────────────── */
+.prose { white-space: pre-wrap; font-size: 13px; line-height: 1.65; color: var(--text-1); }
+
+.err-banner {
+  background: var(--red-bg);
+  border: 1px solid var(--red-border);
+  border-radius: var(--radius-sm);
+  padding: 11px 15px;
+  color: var(--red);
+  font-size: 13px;
+}
+
+/* ── Notion section ───────────────────────── */
+.notion-section {
+  border-top: 1px solid var(--border);
+  padding: 14px 20px 18px;
+}
+
+.notion-token-row {
+  display: flex;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.notion-token-input {
+  flex: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-xs);
+  padding: 7px 10px;
+  font-family: var(--font);
+  font-size: 12px;
+  color: var(--text-1);
+  outline: none;
+  font-family: monospace;
+  letter-spacing: 0.3px;
+}
+.notion-token-input::placeholder { color: var(--text-3); font-family: var(--font); letter-spacing: 0; }
+.notion-token-input:focus { border-color: var(--accent-mid); box-shadow: 0 0 0 2px rgba(91,79,232,0.1); }
+
+.notion-save-btn {
+  background: var(--bg-hover);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-xs);
+  padding: 7px 12px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.13s;
+}
+.notion-save-btn:hover { background: var(--accent-light); color: var(--accent); border-color: rgba(91,79,232,0.2); }
+
+.notion-status {
+  font-size: 11px;
+  margin-top: 6px;
+  padding: 5px 9px;
+  border-radius: var(--radius-xs);
+  display: none;
+}
+.notion-status.ok  { background: var(--green-bg); color: var(--green); display: block; }
+.notion-status.err { background: var(--red-bg);   color: var(--red);   display: block; }
+.notion-status.inf { background: var(--accent-light); color: var(--accent); display: block; }
+
+/* Track button in closing card */
+.track-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.track-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #000000;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 9px 16px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  letter-spacing: -0.1px;
+}
+.track-btn:hover:not(:disabled) { opacity: 0.82; }
+.track-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.track-btn .notion-n {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.5px;
+}
+
+.track-hint { font-size: 11.5px; color: var(--text-3); }
+
+.resume-version-row {
+  display: flex;
+  gap: 7px;
+  flex: 1;
+}
+
+.rv-input {
+  flex: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-xs);
+  padding: 7px 10px;
+  font-family: var(--font);
+  font-size: 12px;
+  color: var(--text-1);
+  outline: none;
+}
+.rv-input::placeholder { color: var(--text-3); }
+.rv-input:focus { border-color: var(--accent-mid); }
+
+/* CORS warning banner */
+.cors-banner {
+  background: var(--amber-bg);
+  border: 1px solid var(--amber-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 12.5px;
+  color: var(--amber);
+  line-height: 1.6;
+}
+.cors-banner strong { font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <header>
+    <div class="header-brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="5" height="5" rx="1.5" fill="white" opacity="0.9"/>
+          <rect x="9" y="2" width="5" height="5" rx="1.5" fill="white" opacity="0.55"/>
+          <rect x="2" y="9" width="5" height="5" rx="1.5" fill="white" opacity="0.55"/>
+          <rect x="9" y="9" width="5" height="5" rx="1.5" fill="white" opacity="0.9"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">AppFlow</div>
+        <div class="brand-sub">Job Application Orchestrator</div>
+      </div>
+    </div>
+    <div class="header-center">
+      <div class="step-pills">
+        <div class="step-pill" id="pill0"><div class="dot"></div> Strategic Take</div>
+        <div class="step-pill" id="pill1"><div class="dot"></div> Summary</div>
+        <div class="step-pill" id="pill2"><div class="dot"></div> ATS Analysis</div>
+        <div class="step-pill" id="pill3"><div class="dot"></div> Q&amp;A</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <aside>
+    <div class="sidebar-inner">
+
+      <div>
+        <div class="field-label">Resume</div>
+        <div id="dropZone" class="drop-zone"
+          onclick="document.getElementById('resumeInput').click()"
+          ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+          <input type="file" id="resumeInput" accept=".pdf,.txt,.doc,.docx" style="display:none" onchange="handleFile(this.files[0])">
+
+          <div id="dropEmpty" class="drop-empty">
+            <div class="drop-icon">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 10.5V3M5.5 5.5L8 3l2.5 2.5"/>
+                <path d="M3 11v1.5A1.5 1.5 0 004.5 14h7A1.5 1.5 0 0013 12.5V11"/>
+              </svg>
+            </div>
+            <div class="drop-text">Drop resume or click to upload</div>
+            <div class="drop-sub">PDF · TXT · DOCX</div>
+          </div>
+
+          <div id="dropLoaded" class="drop-loaded" style="display:none">
+            <div class="drop-loaded-icon">📄</div>
+            <div style="flex:1;min-width:0;">
+              <div class="file-name" id="fileName">—</div>
+              <div class="file-meta" id="fileMeta">—</div>
+            </div>
+            <button class="clear-btn" onclick="clearResume(event)" title="Remove">✕</button>
+          </div>
+        </div>
+        <div id="fileError" class="file-error" style="display:none"></div>
+        <div id="parseStatus" class="parse-status" style="display:none">
+          <div class="spinner" style="width:12px;height:12px;border-width:1.5px;"></div>
+          <span>Extracting text…</span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div class="field-label">Job description</div>
+        <textarea id="jdInput" rows="9" placeholder="Paste the full job description here…&#10;&#10;Include the role title, company, requirements, and responsibilities."></textarea>
+      </div>
+
+      <div>
+        <button class="qa-toggle" id="qaToggle" onclick="toggleQA()">
+          <div class="qa-toggle-icon" id="qaIcon">+</div>
+          <span>Add application questions</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--text-3);">optional</span>
+        </button>
+        <div id="qaWrap" style="display:none;margin-top:6px;">
+          <textarea id="qaInput" rows="5" placeholder="Paste specific questions from the application form…&#10;e.g. Why do you want to work here?"></textarea>
+        </div>
+      </div>
+
+      <button class="run-btn" id="runBtn" onclick="runWorkflow()">
+        Run full workflow <span class="run-arrow">→</span>
+      </button>
+
+      <div>
+        <div class="field-label">Notion integration</div>
+        <div class="notion-token-row">
+          <input class="notion-token-input" id="notionToken" type="password" placeholder="secret_xxxx… (Integration token)" autocomplete="off">
+          <button class="notion-save-btn" onclick="saveToken()">Save</button>
+        </div>
+        <div class="notion-status" id="notionStatus"></div>
+        <div style="font-size:10.5px;color:var(--text-3);margin-top:6px;line-height:1.5;">Token stored in browser only. <a href="https://www.notion.so/my-integrations" target="_blank" style="color:var(--accent);text-decoration:none;">Get yours →</a></div>
+      </div>
+
+    </div>
+
+    <div class="sidebar-stats">
+      <div class="stat-tile">
+        <div class="stat-val" id="statJobs">0</div>
+        <div class="stat-lbl">jobs run</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-val" id="statScore">—</div>
+        <div class="stat-lbl">last ATS score</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main id="mainContent">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-graphic">⚡</div>
+      <div class="empty-title">Ready to run</div>
+      <div class="empty-sub">Upload your resume, paste a job description, and click Run to get a complete application block in one pass.</div>
+    </div>
+  </main>
+
+</div>
+<script>
+let RESUME_TEXT = '', resumeFileName = '', resumeWordCount = 0;
+let jobsRun = 0, lastScore = null, qaVisible = false;
+
+// Load saved Notion token
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('notion_token');
+  if (saved) {
+    document.getElementById('notionToken').value = saved;
+    setNotionStatus('notionStatus', 'ok', '✓ Token loaded from browser storage');
+  }
+});
+
+function onDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('drag-over'); }
+function onDragLeave() { document.getElementById('dropZone').classList.remove('drag-over'); }
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+}
+
+async function handleFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['pdf','txt','doc','docx'].includes(ext)) { showErr('Unsupported file type. Use PDF, TXT, or DOCX.'); return; }
+  hideErr();
+  showParse(true);
+  try {
+    let text = ext === 'txt' ? await file.text() : ext === 'pdf' ? await extractPDF(file) : await extractDOCX(file);
+    text = text.trim();
+    if (text.length < 100) { showErr('Could not extract text. Try saving as .txt and uploading that.'); showParse(false); return; }
+    RESUME_TEXT = text;
+    resumeFileName = file.name;
+    resumeWordCount = text.split(/\s+/).length;
+    showLoaded(file.name, resumeWordCount);
+  } catch(err) {
+    showErr('Error: ' + err.message + '. Try a .txt version.');
+  } finally { showParse(false); }
+}
+
+async function extractPDF(file) {
+  return new Promise((resolve, reject) => {
+    const existing = document.getElementById('pdfjsScript');
+    const go = () => doPDF(file, resolve, reject);
+    if (existing) { go(); return; }
+    const s = document.createElement('script');
+    s.id = 'pdfjsScript';
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = go; s.onerror = () => reject(new Error('Could not load PDF parser'));
+    document.head.appendChild(s);
+  });
+}
+
+async function doPDF(file, resolve, reject) {
+  try {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+    let txt = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const pg = await pdf.getPage(i);
+      txt += (await pg.getTextContent()).items.map(x => x.str).join(' ') + '\n';
+    }
+    resolve(txt);
+  } catch(e) { reject(e); }
+}
+
+async function extractDOCX(file) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+    s.onload = async () => {
+      try { resolve((await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })).value); }
+      catch(e) { reject(e); }
+    };
+    s.onerror = () => reject(new Error('Could not load DOCX parser'));
+    document.head.appendChild(s);
+  });
+}
+
+function showLoaded(name, words) {
+  document.getElementById('dropEmpty').style.display = 'none';
+  document.getElementById('dropLoaded').style.display = 'flex';
+  document.getElementById('fileName').textContent = name.length > 30 ? name.slice(0,27)+'…' : name;
+  document.getElementById('fileMeta').textContent = words + ' words extracted · ready';
+  const dz = document.getElementById('dropZone');
+  dz.style.borderStyle = 'solid'; dz.style.borderColor = 'var(--green-border)';
+}
+
+function clearResume(e) {
+  e.stopPropagation();
+  RESUME_TEXT = ''; resumeFileName = '';
+  document.getElementById('dropEmpty').style.display = 'flex';
+  document.getElementById('dropLoaded').style.display = 'none';
+  document.getElementById('resumeInput').value = '';
+  const dz = document.getElementById('dropZone');
+  dz.style.borderStyle = 'dashed'; dz.style.borderColor = '';
+  hideErr();
+}
+
+function showErr(msg) { const e = document.getElementById('fileError'); e.textContent = msg; e.style.display = 'block'; }
+function hideErr() { document.getElementById('fileError').style.display = 'none'; }
+function showParse(v) { document.getElementById('parseStatus').style.display = v ? 'flex' : 'none'; }
+
+function toggleQA() {
+  qaVisible = !qaVisible;
+  document.getElementById('qaWrap').style.display = qaVisible ? 'block' : 'none';
+  document.getElementById('qaIcon').textContent = qaVisible ? '−' : '+';
+}
+
+function setPill(i, state) { document.getElementById('pill'+i).className = 'step-pill ' + state; }
+
+async function callClaude(sys, user) {
+  const r = await fetch('/api/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ system: sys, user })
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(()=>({}));
+    throw new Error(err.error || 'API error ' + r.status);
+  }
+  return (await r.json()).text;
+}
+
+function makeCard(id, num, title, sub) {
+  const d = document.createElement('div');
+  d.className = 'step-card'; d.id = id;
+  d.innerHTML = `
+    <div class="step-head">
+      <div class="step-badge idle" id="${id}-badge">${num}</div>
+      <div class="step-title-wrap">
+        <div class="step-title">${title}</div>
+        <div class="step-subtitle">${sub}</div>
+      </div>
+      <div class="step-status status-idle" id="${id}-status">Pending</div>
+    </div>
+    <div class="step-body" id="${id}-body">
+      <div class="loading-row" style="display:none" id="${id}-loading">
+        <div class="spinner"></div><span id="${id}-loading-msg">Analyzing…</span>
+      </div>
+    </div>`;
+  return d;
+}
+
+function setRunning(id, msg) {
+  document.getElementById(id).classList.add('is-running');
+  document.getElementById(id+'-badge').className = 'step-badge running';
+  const s = document.getElementById(id+'-status');
+  s.className = 'step-status status-running'; s.textContent = 'Running';
+  const l = document.getElementById(id+'-loading');
+  document.getElementById(id+'-loading-msg').textContent = msg || 'Analyzing…';
+  l.style.display = 'flex';
+}
+
+function setDone(id) {
+  document.getElementById(id).classList.remove('is-running');
+  document.getElementById(id).classList.add('is-done');
+  document.getElementById(id+'-badge').className = 'step-badge done';
+  document.getElementById(id+'-badge').textContent = '✓';
+  const s = document.getElementById(id+'-status');
+  s.className = 'step-status status-done'; s.textContent = 'Done';
+  document.getElementById(id+'-loading').style.display = 'none';
+}
+
+function parseTake(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const r = { fitSignal:'', worth:'', watch:[], green:[], bottom:'' };
+  let mode = '';
+  for (const l of lines) {
+    const lo = l.toLowerCase();
+    if (lo.startsWith('fit signal:')) { r.fitSignal = l.replace(/fit signal:/i,'').trim(); mode=''; }
+    else if (lo.startsWith('worth applying:')) { r.worth = l.replace(/worth applying:/i,'').trim(); mode=''; }
+    else if (lo.startsWith('watch out')) { const v=l.replace(/watch out[^:]*:/i,'').trim(); if(v) r.watch.push(v); mode='watch'; }
+    else if (lo.startsWith('green light')) { const v=l.replace(/green lights?:/i,'').trim(); if(v) r.green.push(v); mode='green'; }
+    else if (lo.startsWith('bottom line:')) { r.bottom = l.replace(/bottom line:/i,'').trim(); mode=''; }
+    else if (mode==='watch' && l.match(/^[-•\d]/)) r.watch.push(l.replace(/^[-•\d.]\s*/,''));
+    else if (mode==='green' && l.match(/^[-•\d]/)) r.green.push(l.replace(/^[-•\d.]\s*/,''));
+  }
+  return r;
+}
+
+function renderTake(id, text) {
+  const t = parseTake(text);
+  const sc = t.fitSignal.toLowerCase().includes('strong') ? 'sig-strong' : t.fitSignal.toLowerCase().includes('moderate') ? 'sig-moderate' : 'sig-stretch';
+  const wHtml = (t.watch.length ? t.watch : ['Review JD carefully']).map(w => `<div class="dot-item"><div class="flag-dot"></div><span>${w}</span></div>`).join('');
+  const gHtml = (t.green.length ? t.green : ['Good general alignment']).map(g => `<div class="dot-item"><div class="green-dot"></div><span>${g}</span></div>`).join('');
+  document.getElementById(id+'-body').innerHTML = `
+    <div class="take-grid">
+      <div class="take-cell"><div class="take-lbl">Fit signal</div><div class="take-val ${sc}">${t.fitSignal||'—'}</div></div>
+      <div class="take-cell"><div class="take-lbl">Worth applying</div><div class="take-val">${t.worth||'—'}</div></div>
+    </div>
+    <div class="two-col">
+      <div><div class="mini-label">Watch out for</div><div class="dot-list">${wHtml}</div></div>
+      <div><div class="mini-label">Green lights</div><div class="dot-list">${gHtml}</div></div>
+    </div>
+    ${t.bottom ? `<div class="bottom-line">${t.bottom}</div>` : ''}`;
+}
+
+function renderSummary(id, text) {
+  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+  const summary = [], tags = [];
+  let inMeta = false;
+  for (const l of lines) {
+    if (l.startsWith('↳') || l.match(/^(Title blend|Keywords|Passionate about)/i)) { inMeta=true; tags.push(l.replace(/^↳\s*/,'')); }
+    else if (!inMeta) summary.push(l);
+    else tags.push(l);
+  }
+  document.getElementById(id+'-body').innerHTML = `
+    <div class="summary-quote">${summary.join(' ').trim() || text}</div>
+    ${tags.length ? `<div class="tag-row">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>` : ''}`;
+}
+
+function parseATS(text) {
+  const rows = []; let found=0, total=0;
+  for (const line of text.split('\n')) {
+    const t = line.trim();
+    if (!t.startsWith('|') || t.includes('---') || t.toLowerCase().includes('keyword')) continue;
+    const c = t.split('|').map(x=>x.trim()).filter(Boolean);
+    if (c.length < 3) continue;
+    rows.push({ kw:c[0], st:c[1], pr:c[2], ctx:c[3]||'' });
+    const sl = c[1].toLowerCase();
+    if (sl.includes('found')||sl.includes('✓')||sl.includes('present')) found++;
+    total++;
+  }
+  const pct = total > 0 ? Math.round((found/total)*100) : 0;
+  return { rows, found, total, pct };
+}
+
+function renderATS(id, text) {
+  const { rows, found, total, pct } = parseATS(text);
+  const stIcon = s => {
+    const sl=s.toLowerCase();
+    if (sl.includes('found')||sl.includes('✓')||sl.includes('present')) return '<span class="found">✓ Found</span>';
+    if (sl.includes('partial')||sl.includes('related')) return '<span class="partial">~ Partial</span>';
+    return '<span class="missing">✗ Missing</span>';
+  };
+  const prBadge = p => {
+    const pl=p.toLowerCase();
+    if (pl.includes('high')) return '<span class="pill-high">High</span>';
+    if (pl.includes('med')) return '<span class="pill-med">Med</span>';
+    return '<span class="pill-low">Low</span>';
+  };
+  if (!rows.length) { document.getElementById(id+'-body').innerHTML = `<div class="prose">${text}</div>`; return; }
+  document.getElementById(id+'-body').innerHTML = `
+    <div class="ats-wrap">
+      <table class="ats-table">
+        <thead><tr><th>Keyword / Skill</th><th>Status</th><th>Priority</th><th>Context</th></tr></thead>
+        <tbody>${rows.map(r=>`<tr><td>${r.kw}</td><td>${stIcon(r.st)}</td><td>${prBadge(r.pr)}</td><td style="color:var(--text-2);font-size:12px">${r.ctx}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  const bar = document.createElement('div');
+  bar.className = 'score-bar';
+  bar.innerHTML = `<span class="score-lbl">${found}/${total} keywords matched</span><div class="score-track"><div class="score-fill" id="scoreFill" style="width:0%"></div></div><span class="score-pct">${pct}%</span>`;
+  document.getElementById(id).appendChild(bar);
+  setTimeout(()=>{ const f=document.getElementById('scoreFill'); if(f) f.style.width=pct+'%'; }, 120);
+  lastScore = pct+'%';
+  document.getElementById('statScore').textContent = pct+'%';
+  return { found, total, pct };
+}
+
+function renderQA(id, text) {
+  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+  let html='', q='', a='';
+  const flush=()=>{ if(q||a) html+=`<div class="qa-item"><div class="qa-q">${q}</div><div class="qa-a">${a.trim()}</div></div>`; };
+  for (const l of lines) {
+    if (l.match(/^Q\s*[:.]|^Q\d+\s*[:.]/i)) { flush(); q=l.replace(/^Q\s*[:.]|^Q\d+\s*[:.]/i,'').trim(); a=''; }
+    else if (l.match(/^A\s*[:.]|^A\d+\s*[:.]/i)) { a=l.replace(/^A\s*[:.]|^A\d+\s*[:.]/i,'').trim(); }
+    else if (q) a+=' '+l;
+  }
+  flush();
+  document.getElementById(id+'-body').innerHTML = html || `<div class="prose">${text}</div>`;
+}
+
+function getCompany(jd) {
+  const m = jd.match(/at\s+([A-Z][A-Za-z\s&]+?)(?:\s+is|\s+are|[—\-\n,.])/);
+  if (m) return m[1].trim();
+  const m2 = jd.match(/company:\s*([^\n]+)/i);
+  return m2 ? m2[1].trim() : 'Company';
+}
+
+function getRole(jd) {
+  const m = jd.match(/(?:title|role|position):\s*([^\n]+)/i);
+  if (m) return m[1].trim();
+  const f = jd.split('\n').find(l=>l.trim().length>2&&l.trim().length<80);
+  return f ? f.trim() : 'Role';
+}
+
+function makeClosing(jd, scores) {
+  const company = getCompany(jd);
+  const role = getRole(jd);
+  const atsStr = lastScore ? `${scores.found}/${scores.total} — ${lastScore}` : '—';
+  const d = document.createElement('div');
+  d.className = 'closing-card';
+  d.id = 'closingCard';
+  d.innerHTML = `
+    <div class="closing-top">
+      <div class="closing-top-icon">✅</div>
+      <div>
+        <div class="closing-top-text">Application block complete</div>
+        <div class="closing-top-sub">Ready to copy into your application</div>
+      </div>
+    </div>
+    <div class="closing-rows">
+      <div class="closing-row"><span class="closing-key">Company</span><span class="closing-val" id="cc-company">${company}</span></div>
+      <div class="closing-row"><span class="closing-key">Role</span><span class="closing-val" id="cc-role">${role}</span></div>
+      <div class="closing-row"><span class="closing-key">ATS Score</span><span class="closing-val" id="cc-ats">${atsStr}</span></div>
+      <div class="closing-row"><span class="closing-key">Q&amp;A</span><span class="closing-val" id="cc-qa">${scores.qa?'Done':'Not provided'}</span></div>
+      <div class="closing-row"><span class="closing-key">Ready to apply</span><span class="closing-val val-warn">⚠ Review gaps before submitting</span></div>
+    </div>
+    <div class="notion-section">
+      <div class="field-label" style="margin-bottom:8px;">Track to Notion</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input class="rv-input" id="rvInput" placeholder="Resume version (e.g. O4, A53…)" style="max-width:200px;">
+        <button class="track-btn" id="trackBtn" onclick="trackToNotion()">
+          <span class="notion-n">N</span> Log to Applications
+        </button>
+      </div>
+      <div class="notion-status" id="trackStatus" style="margin-top:8px;"></div>
+    </div>`;
+  return d;
+}
+
+// ── Notion helpers ──────────────────────────────────────────
+const NOTION_DB = '3db8e40b-2bb9-46fe-99eb-c7167408bdae';
+
+function saveToken() {
+  const val = document.getElementById('notionToken').value.trim();
+  if (!val.startsWith('secret_') && !val.startsWith('ntn_')) {
+    setNotionStatus('notionStatus', 'err', 'Token should start with secret_ or ntn_');
+    return;
+  }
+  localStorage.setItem('notion_token', val);
+  setNotionStatus('notionStatus', 'ok', '✓ Token saved — ready to track applications');
+}
+
+function getToken() {
+  const stored = localStorage.getItem('notion_token');
+  const input = document.getElementById('notionToken').value.trim();
+  return input || stored || '';
+}
+
+function setNotionStatus(elId, type, msg) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.className = 'notion-status ' + type;
+  el.textContent = msg;
+}
+
+async function trackToNotion() {
+  const token = getToken();
+  if (!token) {
+    setNotionStatus('trackStatus', 'err', 'Add your Notion integration token in the sidebar first.');
+    return;
+  }
+
+  const jd = document.getElementById('jdInput').value.trim();
+  const company = document.getElementById('cc-company')?.textContent || getCompany(jd);
+  const role = document.getElementById('cc-role')?.textContent || getRole(jd);
+  const atsScore = document.getElementById('cc-ats')?.textContent || (lastScore || 'N/A');
+  const qaVal = document.getElementById('cc-qa')?.textContent || 'Not provided';
+  const rv = document.getElementById('rvInput')?.value.trim() || resumeFileName || 'Not specified';
+  const today = new Date().toISOString().split('T')[0];
+
+  const btn = document.getElementById('trackBtn');
+  btn.disabled = true;
+  setNotionStatus('trackStatus', 'inf', 'Logging to Notion…');
+
+  const props = {
+    "Company":               { title: [{ text: { content: company } }] },
+    "Role":                  { rich_text: [{ text: { content: role } }] },
+    "Status":                { select: { name: 'Applied' } },
+    "Sponsorship":           { select: { name: 'Unconfirmed' } },
+    "ATS Score":             { rich_text: [{ text: { content: atsScore } }] },
+    "Q&A Done":              { select: { name: qaVal === 'Done' ? 'Yes' : 'No' } },
+    "Resume Version":        { rich_text: [{ text: { content: rv } }] },
+    "Job Description":       { rich_text: [{ text: { content: jd.slice(0, 2000) } }] },
+    "Notes":                 { rich_text: [{ text: { content: '⚠ Confirm H1B sponsorship before applying. Logged via AppFlow.' } }] },
+  };
+
+  // Date Applied — nested format your DB uses
+  props["date:Date Applied:start"] = { rich_text: [{ text: { content: today } }] };
+
+  try {
+    const res = await fetch('/api/notion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, database_id: NOTION_DB, properties: props })
+    });
+
+    if (res.ok) {
+      setNotionStatus('trackStatus', 'ok', `✓ Logged: ${company} — ${role} → Applied (${today})`);
+      btn.textContent = '✓ Logged';
+      btn.style.background = 'var(--green)';
+    } else {
+      const err = await res.json();
+      // If property name mismatch, try simplified version
+      if (err.code === 'validation_error' || res.status === 400) {
+        await trackNotionFallback(token, company, role, atsScore, qaVal, rv, jd, today);
+      } else {
+        throw new Error(err.message || 'Status ' + res.status);
+      }
+    }
+  } catch(e) {
+    if (e.message.includes('fetch') || e.message.includes('CORS') || e.message.includes('network')) {
+      setNotionStatus('trackStatus', 'err', 'CORS error — Notion API must be called server-side. See note below.');
+      showCORSnote();
+    } else {
+      setNotionStatus('trackStatus', 'err', 'Error: ' + e.message);
+    }
+    btn.disabled = false;
+  }
+}
+
+async function trackNotionFallback(token, company, role, atsScore, qaVal, rv, jd, today) {
+  const res = await fetch('/api/notion', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      token,
+      database_id: NOTION_DB,
+      properties: {
+        "Company":        { title: [{ text: { content: company } }] },
+        "Role":           { rich_text: [{ text: { content: role } }] },
+        "Status":         { select: { name: 'Applied' } },
+        "Sponsorship":    { select: { name: 'Unconfirmed' } },
+        "ATS Score":      { rich_text: [{ text: { content: atsScore } }] },
+        "Q&A Done":       { select: { name: qaVal === 'Done' ? 'Yes' : 'No' } },
+        "Resume Version": { rich_text: [{ text: { content: rv } }] },
+        "Job Description":{ rich_text: [{ text: { content: jd.slice(0,2000) } }] },
+        "Notes":          { rich_text: [{ text: { content: '⚠ Confirm H1B sponsorship. Logged via AppFlow. Date: ' + today } }] }
+      }
+    })
+  });
+  if (res.ok) {
+    setNotionStatus('trackStatus', 'ok', `✓ Logged: ${company} — ${role} (${today})`);
+    const btn = document.getElementById('trackBtn');
+    btn.textContent = '✓ Logged'; btn.style.background = 'var(--green)';
+  } else {
+    const err = await res.json();
+    throw new Error(err.message || 'Notion error');
+  }
+}
+
+function showCORSnote() {
+  const existing = document.getElementById('corsNote');
+  if (existing) return;
+  const note = document.createElement('div');
+  note.id = 'corsNote';
+  note.className = 'cors-banner';
+  note.style.margin = '0 20px 16px';
+  note.innerHTML = `<strong>About the CORS / Failed to fetch error:</strong><br>
+Both the Claude API and Notion API block direct browser requests for security (CORS policy). This app works fully inside Claude.ai — but as a standalone HTML file, API calls need a small proxy server.<br><br>
+<strong>Quickest fix:</strong> Run a tiny Node proxy locally:<br>
+<code style="font-family:monospace;font-size:11px;background:rgba(0,0,0,0.06);padding:2px 5px;border-radius:3px;">npx cors-anywhere</code> then point fetch calls to <code style="font-family:monospace;font-size:11px;background:rgba(0,0,0,0.06);padding:2px 5px;border-radius:3px;">localhost:8080/api.anthropic.com/...</code>. Want me to generate the proxy script?`;
+  const card = document.getElementById('closingCard');
+  if (card) card.appendChild(note);
+}
+
+async function runWorkflow() {
+  if (!RESUME_TEXT || RESUME_TEXT.length < 100) {
+    showErr('Upload your resume first — PDF, TXT, or DOCX.');
+    const dz = document.getElementById('dropZone');
+    dz.style.borderColor = 'var(--red)';
+    setTimeout(()=>dz.style.borderColor='', 2000);
+    return;
+  }
+  const jd = document.getElementById('jdInput').value.trim();
+  if (!jd || jd.length < 50) { alert('Please paste a full job description.'); return; }
+  const qa = document.getElementById('qaInput')?.value.trim() || '';
+
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('emptyState').style.display = 'none';
+  const main = document.getElementById('mainContent');
+  while (main.firstChild) main.removeChild(main.firstChild);
+  ['pill0','pill1','pill2','pill3'].forEach(id => document.getElementById(id).className = 'step-pill');
+
+  const c0 = makeCard('s0','0','Strategic Take','Fit assessment before tailoring');
+  const c1 = makeCard('s1','1','Tailored Summary','3-line resume summary for this role');
+  const c2 = makeCard('s2','2','ATS Gap Analysis','Keyword match table');
+  const c3 = makeCard('s3','3','Application Q&A', qa ? 'Answering your questions' : 'No questions provided');
+  [c0,c1,c2,c3].forEach(c=>main.appendChild(c));
+
+  const scores = { found:0, total:0, qa:!!qa };
+
+  try {
+    setPill(0,'active'); setRunning('s0','Assessing strategic fit…');
+    const take = await callClaude(
+      `You are a candid career advisor. Assess fit between a resume and job description. Be direct.
+Respond in exactly this format:
+Fit signal: [Strong / Moderate / Stretch] — one sentence reason
+Worth applying: [Yes / Yes with caveats / No]
+Watch out for:
+- [flag 1]
+- [flag 2]
+- [flag 3]
+Green lights:
+- [strength 1]
+- [strength 2]
+- [strength 3]
+Bottom line: [1-2 direct sentences]`,
+      `RESUME:\n${RESUME_TEXT}\n\nJOB DESCRIPTION:\n${jd}`);
+    renderTake('s0', take); setDone('s0'); setPill(0,'done');
+
+    setPill(1,'active'); setRunning('s1','Writing tailored summary…');
+    const summary = await callClaude(
+      `You write tailored resume summaries. Study the resume and JD carefully.
+Write a 3-line resume summary tailored to the job description.
+Rules: Natural language, weave in 4-6 JD keywords, highlight the most relevant experience, end with a passionate-about line connecting to the company mission.
+Then add on new lines starting with ↳:
+↳ Title blend: [choice and reason]
+↳ Keywords woven in: [list]
+↳ Passionate about: [company/role value]`,
+      `RESUME:\n${RESUME_TEXT}\n\nJOB DESCRIPTION:\n${jd}`);
+    renderSummary('s1', summary); setDone('s1'); setPill(1,'done');
+
+    setPill(2,'active'); setRunning('s2','Running ATS keyword analysis…');
+    const ats = await callClaude(
+      `You are an ATS keyword analyzer. Compare resume against job description.
+Output a markdown table: Keyword / Skill | Status | Priority | Context
+Status: ✓ Found / ~ Partial / ✗ Missing
+Priority: High / Med / Low
+Include 15-25 keywords covering technical skills, tools, methodologies, and role-specific terms.
+After the table add: Score: X/Y keywords found (Z%)`,
+      `RESUME:\n${RESUME_TEXT}\n\nJOB DESCRIPTION:\n${jd}`);
+    const atsResult = renderATS('s2', ats);
+    if (atsResult) { scores.found = atsResult.found; scores.total = atsResult.total; }
+    else { const p = parseATS(ats); scores.found=p.found; scores.total=p.total; }
+    setDone('s2'); setPill(2,'done');
+
+    setPill(3,'active');
+    if (qa) {
+      setRunning('s3','Answering application questions…');
+      const qaOut = await callClaude(
+        `Answer job application questions using the candidate's resume. Ground every answer in specific real experience. Do not fabricate. Keep answers 3-5 sentences.
+Format as:
+Q: [question]
+A: [answer]`,
+        `RESUME:\n${RESUME_TEXT}\n\nJOB DESCRIPTION:\n${jd}\n\nQUESTIONS:\n${qa}`);
+      renderQA('s3', qaOut); scores.qa = true;
+    } else {
+      document.getElementById('s3-body').innerHTML = `<div style="color:var(--text-3);font-size:13px;font-style:italic;">No questions provided. Toggle "Add application questions" in the sidebar and re-run.</div>`;
+    }
+    setDone('s3'); setPill(3,'done');
+
+    main.appendChild(makeClosing(jd, scores));
+    jobsRun++;
+    document.getElementById('statJobs').textContent = jobsRun;
+
+  } catch(err) {
+    const isCORS = err.message.toLowerCase().includes('fetch') || err.message.toLowerCase().includes('failed');
+    const e = document.createElement('div');
+    e.className = isCORS ? 'cors-banner' : 'err-banner';
+    e.innerHTML = isCORS
+      ? `<strong>Failed to fetch — CORS error</strong><br>
+         Browsers block direct calls to <code style="font-family:monospace;font-size:11px;">api.anthropic.com</code> from local HTML files. This app works fully inside Claude.ai.<br><br>
+         To run standalone, you need a small proxy server. The simplest option:<br>
+         <code style="font-family:monospace;font-size:11.5px;background:rgba(0,0,0,0.06);padding:2px 6px;border-radius:3px;">npm install -g local-cors-proxy && lcp --proxyUrl https://api.anthropic.com</code><br><br>
+         Then ask me to generate the proxy-aware version of this app.`
+      : 'Error: ' + err.message + '. Check your connection and try again.';
+    main.appendChild(e);
+  } finally {
+    document.getElementById('runBtn').disabled = false;
+  }
+}
+</script>
+</body>
+</html>
